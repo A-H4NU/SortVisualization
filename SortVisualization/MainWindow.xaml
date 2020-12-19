@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:SortVisualization"
         mc:Ignorable="d"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Sort Visualization" Height="450" Width="800">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -17,26 +17,61 @@
             <RowDefinition Height="25"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <glWpfControl:GLWpfControl 
-            x:Name="OpenTkControl" 
-            Render="OpenTkControl_OnRender"
-            Grid.Column="0"
-            Grid.Row="1"/>
-        <Grid Grid.Column="2" Grid.Row="1">
+        <glWpfControl:GLWpfControl x:Name="OpenTkControl" Render="OpenTkControl_OnRender" Grid.Column="0" Grid.Row="1"/>
+        <Grid x:Name="grid" Grid.Column="2" Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="75"/>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="50"/>
             </Grid.RowDefinitions>
-            <Button Content="Start" Margin="10,10,10,10" Grid.Row="2" FontSize="15" Click="Start_Click"/>
-            <ListBox Name="list" Grid.Row="0">
+            <ListBox x:Name="_sortList" ItemsSource="{Binding SortTypes}" Grid.Row="0" BorderThickness="0" VerticalAlignment="Center">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <RadioButton/>
+                        <RadioButton GroupName="SortType" Content="{Binding Path=.}" Checked="SortType_Checked" FontSize="15" VerticalAlignment="Center"/>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <Grid Grid.Row="1"/>
+            
+            <!-- Size Control -->
+            <StackPanel Grid.Row="1" Margin="10,0,10,0">
+                <DockPanel Margin="0">
+                    <Label FontSize="15" DockPanel.Dock="Left">Size:</Label>
+                    <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                             x:Name="_sizeText" Text="{Binding Path=Size, Mode=TwoWay}" TextChanged="SizeText_TextChanged"/>
+                </DockPanel>
+                <Slider x:Name="_sizeSlider" Value="{Binding Path=Size, Mode=TwoWay}" SmallChange="1" Maximum="1000" Minimum="1"/>
+            </StackPanel>
+
+            <!-- Speed Control -->
+            <StackPanel Grid.Row="2" Margin="10,0,10,0">
+                <DockPanel Margin="0">
+                    <Label FontSize="15" DockPanel.Dock="Left">Speed:</Label>
+                    <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                             x:Name="_speedText" Text="{Binding Path=Speed, Mode=TwoWay}" TextChanged="SpeedText_TextChanged"/>
+                </DockPanel>
+                <Slider x:Name="_speedSlider" Value="{Binding Path=Speed, Mode=TwoWay}" SmallChange="1" Maximum="1000" Minimum="1"/>
+            </StackPanel>
+
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button x:Name="_startButton" Content="Start" Margin="10" Grid.ColumnSpan="2" FontSize="15" Click="Start_Click" IsEnabled="False"/>
+                <Button x:Name="_pauseButton" Content="Pause" Margin="10,10,5,10" Grid.Column="0" FontSize="15" Click="Pause_Click" Visibility="Hidden"/>
+                <Button x:Name="_stopButton" Content="Stop" Margin="5,10,10,10" Grid.Column="1" FontSize="15" Click="Stop_Click" Visibility="Hidden"/>
+            </Grid>
+            
+
+        </Grid>
+        <Grid Grid.Row="0" Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" HorizontalAlignment="Center" Text="{Binding Path=TotalComparison, StringFormat=Total Comparison: {0}}" VerticalAlignment="Center" FontSize="15"/>
+            <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="{Binding Path=TotalSwap, StringFormat=Total Array Access: {0}}" VerticalAlignment="Center" FontSize="15"/>
         </Grid>
     </Grid>
 </Window>

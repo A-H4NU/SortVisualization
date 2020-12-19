@@ -11,8 +11,10 @@ namespace SortVisualization
         Bubble,
         Insertion,
         Selection,
+        Shell,
         Merge,
         Quick,
+        Heap,
         Radix
     }
 }
