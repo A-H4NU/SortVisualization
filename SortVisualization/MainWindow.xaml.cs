@@ -33,9 +33,7 @@ namespace SortVisualization
 
         private readonly int _program;
 
-        public static Color4 Normal = Color4.White, Compare = Color4.Red, Swap = Color4.Blue;
-
-        
+        public static Color4 Normal = Color4.SpringGreen, Compare = Color4.IndianRed, Swap = Color4.MediumBlue;
 
         public MainWindow()
         {
@@ -45,6 +43,8 @@ namespace SortVisualization
                 SortTypes.Add(value);
             foreach (var value in Enum.GetNames(typeof(VisualizationType)))
                 VisualizationTypes.Add(value);
+            foreach (var value in Enum.GetNames(typeof(ColorType)))
+                ColorTypes.Add(value);
 
             var settings = new GLWpfControlSettings
             {
@@ -52,10 +52,10 @@ namespace SortVisualization
                 MinorVersion = 6
             };
             OpenTkControl.Start(settings);
-            GL.ClearColor(Color4.DarkGray);
+            GL.ClearColor(Color4.White);
 
             _program = CreateProgram(ColorVertexPath, ColorFragmentPath);
-            _visualTypeCmb.SelectedIndex = 0;
+            _colorTypeCmb.SelectedIndex = _visualTypeCmb.SelectedIndex = 0;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -106,10 +106,11 @@ namespace SortVisualization
 
         private SortType? _sortType = null;
         private VisualizationType _visualType = VisualizationType.Bar;
+        private ColorType _colorType = ColorType.Solid;
 
         public ObservableCollection<string> SortTypes { get; } = new ObservableCollection<string>();
-
         public ObservableCollection<string> VisualizationTypes { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> ColorTypes { get; } = new ObservableCollection<string>();
 
         private SortStep[] _steps;
         private float _currentStep = 0f;
@@ -146,13 +147,21 @@ namespace SortVisualization
             var step = _steps[stepInt];
             for (int i = 0; i < step.Count; ++i)
             {
-                Color4 color = Normal;
-                foreach (var (idx, clr) in step.Processing)
+                Color4 color = default;
+                switch (_colorType)
                 {
-                    if (idx == i)
-                    {
-                        color = clr; break;
-                    }
+                    case ColorType.Solid:
+                        color = Normal;
+                        foreach (var (idx, clr) in step.Processing)
+                        {
+                            if (idx == i)
+                            {
+                                color = clr; break;
+                            }
+                        }
+                        break;
+                    case ColorType.Spectrum:
+                        color = HSVtoRGB((float)step[i] / step.Count * 360, 0.8f, 1f); break;
                 }
                 switch (_visualType)
                 {
@@ -309,6 +318,13 @@ namespace SortVisualization
 
         protected override void OnClosed(EventArgs e)
         {
+            if (_renderObjects != null)
+            {
+                foreach (var ro in _renderObjects)
+                {
+                    ro.Dispose();
+                }
+            }
 
             base.OnClosed(e);
         }
@@ -351,6 +367,14 @@ namespace SortVisualization
             }
         }
 
+        private void _colorTypeCmb_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox combo)
+            {
+                _colorType = (ColorType)combo.SelectedIndex;
+            }
+        }
+
         private static int CompileShader(ShaderType type, string filepath)
         {
             int shader = GL.CreateShader(type);
@@ -373,6 +397,23 @@ namespace SortVisualization
                 int j = random.Next(array.Length);
                 (array[i], array[j]) = (array[j], array[i]);
             }
+        }
+
+        /// <param name="H">in degree</param>
+        private static Color4 HSVtoRGB(float H, float S, float V)
+        {
+            H %= 360;
+            float C = V * S;
+            float X = C * (1 - Math.Abs((H / 60) % 2 - 1));
+            float m = V - C;
+            float r = 0f, g = 0f, b = 0f;
+            if (H < 60) (r, g, b) = (C, X, 0);
+            else if (H < 120) (r, g, b) = (X, C, 0);
+            else if (H < 180) (r, g, b) = (0, C, X);
+            else if (H < 240) (r, g, b) = (0, X, C);
+            else if (H < 300) (r, g, b) = (X, 0, C);
+            else (r, g, b) = (C, 0, X);
+            return new Color4(r+m, g+m, b+m, 1f);
         }
     }
 }

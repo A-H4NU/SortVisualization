@@ -7,20 +7,22 @@
         xmlns:local="clr-namespace:SortVisualization"
         mc:Ignorable="d"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        Title="Sort Visualization" Height="680" Width="1000">
+        Title="Sort Visualization" Height="500" Width="889">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="307*"/>
+            <ColumnDefinition Width="89*"/>
+            <ColumnDefinition Width="150"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <glWpfControl:GLWpfControl x:Name="OpenTkControl" Render="OpenTkControl_OnRender" Grid.Column="0" Grid.Row="1"/>
+        <glWpfControl:GLWpfControl x:Name="OpenTkControl" Render="OpenTkControl_OnRender" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"/>
         <Grid x:Name="grid" Grid.Column="2" Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="50"/>
                 <RowDefinition Height="50"/>
                 <RowDefinition Height="50"/>
                 <RowDefinition Height="50"/>
@@ -35,31 +37,36 @@
             </ListBox>
 
             <DockPanel Grid.Row="1" Margin="10,0,10,0">
-                <Label x:Name="label" FontSize="15" DockPanel.Dock="Left" VerticalAlignment="Center">Type:</Label>
-                <ComboBox x:Name="_visualTypeCmb" ItemsSource="{Binding Path=VisualizationTypes}" VerticalAlignment="Center" SelectionChanged="_visualTypeCmb_SelectionChanged"/>
+                <Label FontSize="15" DockPanel.Dock="Left" VerticalAlignment="Center">Color:</Label>
+                <ComboBox x:Name="_colorTypeCmb" ItemsSource="{Binding Path=ColorTypes}" VerticalAlignment="Center" SelectionChanged="_colorTypeCmb_SelectionChanged" FontSize="15"/>
+            </DockPanel>
+            
+            <DockPanel Grid.Row="2" Margin="10,0,10,0">
+                <Label FontSize="15" DockPanel.Dock="Left" VerticalAlignment="Center">Visual:</Label>
+                <ComboBox x:Name="_visualTypeCmb" ItemsSource="{Binding Path=VisualizationTypes}" VerticalAlignment="Center" SelectionChanged="_visualTypeCmb_SelectionChanged" FontSize="15"/>
             </DockPanel>
 
             <!-- Size Control -->
-            <StackPanel Grid.Row="2" Margin="10,0,10,0">
+            <StackPanel Grid.Row="3" Margin="10,0,10,0">
                 <DockPanel Margin="0">
                     <Label FontSize="15" DockPanel.Dock="Left">Size:</Label>
                     <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
-                             x:Name="_sizeText" Text="{Binding Path=Size, Mode=TwoWay}" TextChanged="SizeText_TextChanged"/>
+                             x:Name="_sizeText" Text="{Binding Path=Size, Mode=TwoWay}" TextChanged="SizeText_TextChanged" FontSize="15"/>
                 </DockPanel>
                 <Slider x:Name="_sizeSlider" Value="{Binding Path=Size, Mode=TwoWay}" SmallChange="1" Maximum="1000" Minimum="1"/>
             </StackPanel>
 
             <!-- Speed Control -->
-            <StackPanel Grid.Row="3" Margin="10,0,10,0">
+            <StackPanel Grid.Row="4" Margin="10,0,10,0">
                 <DockPanel Margin="0">
                     <Label FontSize="15" DockPanel.Dock="Left">Speed:</Label>
                     <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
-                             x:Name="_speedText" Text="{Binding Path=Speed, Mode=TwoWay}" TextChanged="SpeedText_TextChanged"/>
+                             x:Name="_speedText" Text="{Binding Path=Speed, Mode=TwoWay}" TextChanged="SpeedText_TextChanged" FontSize="15"/>
                 </DockPanel>
                 <Slider x:Name="_speedSlider" Value="{Binding Path=Speed, Mode=TwoWay}" SmallChange="1" Maximum="1000" Minimum="1"/>
             </StackPanel>
 
-            <Grid Grid.Row="4">
+            <Grid Grid.Row="5">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -71,7 +78,7 @@
 
 
         </Grid>
-        <Grid Grid.Row="0" Grid.Column="0">
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>

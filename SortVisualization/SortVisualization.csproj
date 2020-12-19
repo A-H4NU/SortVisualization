@@ -85,6 +85,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ColoredVertex.cs" />
+    <Compile Include="ColorType.cs" />
     <Compile Include="ObjectFactory.cs" />
     <Compile Include="RenderObject.cs" />
     <Compile Include="Sort.cs" />

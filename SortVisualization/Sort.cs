@@ -271,7 +271,7 @@ namespace SortVisualization
             return steps;
         }
 
-        public static IEnumerable<SortStep> Radix(int[] array)
+        public static IEnumerable<SortStep> RadixLSD(int[] array)
         {
             int swap = 0;
             int mod = 4;

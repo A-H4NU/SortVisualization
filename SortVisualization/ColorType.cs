@@ -6,15 +6,8 @@ using System.Threading.Tasks;
 
 namespace SortVisualization
 {
-    public enum SortType
+    public enum ColorType
     {
-        Bubble,
-        Insertion,
-        Selection,
-        Shell,
-        Merge,
-        Quick,
-        Heap,
-        RadixLSD
+        Solid, Spectrum
     }
 }
