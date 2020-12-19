@@ -90,6 +90,7 @@
     <Compile Include="Sort.cs" />
     <Compile Include="SortStep.cs" />
     <Compile Include="SortType.cs" />
+    <Compile Include="VisualizationType.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

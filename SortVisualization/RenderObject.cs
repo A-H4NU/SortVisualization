@@ -15,7 +15,7 @@ namespace SortVisualization
         private readonly int _program, _vertexArray, _buffer, _verticeCount;
         private PrimitiveType _renderType;
 
-        public RenderObject((ColoredVertex[], PrimitiveType) tuple, int program)
+        public RenderObject((Vertex[], PrimitiveType) tuple, int program)
         {
             _program = program;
             var vertices = tuple.Item1;
@@ -29,7 +29,7 @@ namespace SortVisualization
 
             GL.NamedBufferStorage(
                 _buffer,
-                ColoredVertex.SIZE * _verticeCount,
+                Vertex.SIZE * _verticeCount,
                 vertices,
                 BufferStorageFlags.MapWriteBit);
 
@@ -43,24 +43,15 @@ namespace SortVisualization
                 false,
                 0);
 
-            GL.VertexArrayAttribBinding(_vertexArray, 1, 0);
-            GL.EnableVertexArrayAttrib(_vertexArray, 1);
-            GL.VertexArrayAttribFormat(
-                _vertexArray,
-                1,
-                4,
-                VertexAttribType.Float,
-                false,
-                16);
-
-            GL.VertexArrayVertexBuffer(_vertexArray, 0, _buffer, IntPtr.Zero, ColoredVertex.SIZE);
+            GL.VertexArrayVertexBuffer(_vertexArray, 0, _buffer, IntPtr.Zero, Vertex.SIZE);
         }
 
         public void Render(ref Matrix4 projection, in Vector3 translation, in Vector3 scale, in Vector3 rotation)
         {
             Matrix4 t = Matrix4.CreateTranslation(Position + translation);
             Matrix4 s = Matrix4.CreateScale(Scale * scale);
-            Matrix4 r = Matrix4.CreateRotationX(rotation.X) * Matrix4.CreateRotationY(rotation.Y) * Matrix4.CreateRotationZ(rotation.Z);
+            Vector3 rot = rotation + Rotation;
+            Matrix4 r = Matrix4.CreateRotationX(rot.X) * Matrix4.CreateRotationY(rot.Y) * Matrix4.CreateRotationZ(rot.Z);
             Matrix4 modelView = r * s* t;
             GL.UseProgram(_program);
             GL.UniformMatrix4(10, false, ref modelView);

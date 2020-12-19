@@ -3,17 +3,15 @@ using OpenTK.Graphics;
 
 namespace SortVisualization
 {
-    public struct ColoredVertex
+    public struct Vertex
     {
-        public const int SIZE = 32;
+        public const int SIZE = 16;
 
         public readonly Vector4 Position;
-        public readonly Color4 Color;
 
-        public ColoredVertex(Vector4 position, Color4 color)
+        public Vertex(Vector4 position)
         {
             Position = position;
-            Color = color;
         }
     }
 }

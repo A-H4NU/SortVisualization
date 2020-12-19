@@ -33,16 +33,18 @@ namespace SortVisualization
 
         private readonly int _program;
 
-        public static Color4 Normal = Color4.LightGreen, Compare = Color4.IndianRed, Swap = Color4.CadetBlue;
+        public static Color4 Normal = Color4.White, Compare = Color4.Red, Swap = Color4.Blue;
+
+        
 
         public MainWindow()
         {
             InitializeComponent();
 
             foreach (var value in Enum.GetNames(typeof(SortType)))
-            {
                 SortTypes.Add(value);
-            }
+            foreach (var value in Enum.GetNames(typeof(VisualizationType)))
+                VisualizationTypes.Add(value);
 
             var settings = new GLWpfControlSettings
             {
@@ -50,13 +52,15 @@ namespace SortVisualization
                 MinorVersion = 6
             };
             OpenTkControl.Start(settings);
+            GL.ClearColor(Color4.DarkGray);
 
             _program = CreateProgram(ColorVertexPath, ColorFragmentPath);
+            _visualTypeCmb.SelectedIndex = 0;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private int _size = 500;
+        private int _size = 100;
         public int Size
         {
             get => _size;
@@ -67,7 +71,7 @@ namespace SortVisualization
             }
         }
 
-        private int _speed = 100;
+        private int _speed = 50;
         public int Speed
         {
             get => _speed;
@@ -101,17 +105,21 @@ namespace SortVisualization
         }
 
         private SortType? _sortType = null;
+        private VisualizationType _visualType = VisualizationType.Bar;
 
         public ObservableCollection<string> SortTypes { get; } = new ObservableCollection<string>();
+
+        public ObservableCollection<string> VisualizationTypes { get; } = new ObservableCollection<string>();
 
         private SortStep[] _steps;
         private float _currentStep = 0f;
 
         private bool _working = false;
 
+        private RenderObject[] _renderObjects = null;
+
         private void OpenTkControl_OnRender(TimeSpan delta)
         {
-            GL.ClearColor(Color4.WhiteSmoke);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0f, 1f, 0f, 1f, -1f, 1f);
@@ -119,34 +127,49 @@ namespace SortVisualization
             if (_steps != null)
             {
                 SortStep current = _steps[stepInt];
-                for (int i = 0; i < _steps[stepInt].Count; ++i)
-                {
-                    int val = current[i];
-                    Color4 color = Normal;
-                    var processing = current.Processing.ToList();
-                    int idx = processing.FindIndex((p) => p.Item1 == i);
-                    if (idx >= 0)
-                    {
-                        color = processing[idx].Item2;
-                    }
-                    RenderObject ro = new RenderObject(ObjectFactory.Rectangle(1f, 1f, color), _program)
-                    {
-                        Position = new Vector3((i + 0.5f) / current.Count, 0.5f, 0f),
-                        Scale = new Vector3(1f / current.Count, (float)val / current.Count, 1f)
-                    };
-                    ro.Render(ref projection);
-                    ro.Dispose();
-                }
+                UpdateRenderObjectsAndRender(stepInt, ref projection);
                 (TotalComparison, TotalSwap) = (current.Comparison, current.Swap);
                 if (_working && delta.TotalSeconds < 0.5)
                 {
-                    _currentStep += (float)(delta.TotalSeconds * _speed * 30);
+                    _currentStep += (float)(delta.TotalSeconds * Math.Pow(_speed, 1.1) * 14.03);
                     _currentStep = Math.Min(_currentStep, _steps.Length - 1);
                 }
                 if (_currentStep >= _steps.Length - 1)
                 {
                     Stop_Click(this, new RoutedEventArgs());
                 }
+            }
+        }
+
+        private void UpdateRenderObjectsAndRender(int stepInt, ref Matrix4 projection)
+        {
+            var step = _steps[stepInt];
+            for (int i = 0; i < step.Count; ++i)
+            {
+                Color4 color = Normal;
+                foreach (var (idx, clr) in step.Processing)
+                {
+                    if (idx == i)
+                    {
+                        color = clr; break;
+                    }
+                }
+                switch (_visualType)
+                {
+                    case VisualizationType.Bar:
+                        _renderObjects[i].Scale = new Vector3(1f / step.Count, (float)step[i] / step.Count, 1f);
+                        break;
+                    case VisualizationType.Radial:
+                        float tworad = (float)Math.Sqrt((float)step[i] / step.Count);
+                        _renderObjects[i].Scale = 0.5f * new Vector3(tworad, tworad, 2f);
+                        _renderObjects[i].Rotation = new Vector3(0f, 0f, (float)i / step.Count * MathHelper.TwoPi);
+                        break;
+                    case VisualizationType.Dots:
+                        _renderObjects[i].Position = new Vector3((i + 0.5f) / step.Count, (step[i] - 0.5f) / step.Count, 0f);
+                        break;
+                }
+                GL.Uniform4(20, color);
+                _renderObjects[i].Render(ref projection);
             }
         }
 
@@ -162,31 +185,71 @@ namespace SortVisualization
             }
         }
 
-        private void Start_Click(object sender, RoutedEventArgs e)
+        private async void Start_Click(object sender, RoutedEventArgs e)
         {
-            var toToggle = new UIElement[] { _sizeText, _sizeSlider, _sortList };
             TotalComparison = TotalSwap = 0;
             _currentStep = 0;
+            _startButton.IsEnabled = false;
+            int[] array = Enumerable.Range(1, Size).ToArray();
+            Shuffle(array);
+            var sortmethod = typeof(Sort).GetMethod(Enum.GetName(typeof(SortType), _sortType.Value));
+            var sortTask = Task.Run(() =>
+            {
+                var list = (sortmethod.Invoke(null, new object[] { array.Clone() }) as IEnumerable<SortStep>).ToList();
+                list.Add(new SortStep(
+                    list.Last().GetClonedSequence(),
+                    Array.Empty<(int, Color4)>(),
+                    list.Last().Comparison,
+                    list.Last().Swap));
+                _steps = list.ToArray();
+            });
             if (_size == 1)
             {
                 _steps = new SortStep[] { new SortStep(new int[] { 1 }, Array.Empty<(int, Color4)>(), 0, 0) };
                 return;
             }
+            InitializeRenderObjects(array.Length);
+            await sortTask;
+            var toToggle = new UIElement[] { _sizeText, _sizeSlider, _sortList };
             foreach (var element in toToggle)
                 element.IsEnabled = false;
-            int[] array = Enumerable.Range(1, Size).ToArray();
-            Shuffle(array);
-            var sortmethod = typeof(Sort).GetMethod(Enum.GetName(typeof(SortType), _sortType.Value));
-            var list = (sortmethod.Invoke(null, new object[] { array }) as IEnumerable<SortStep>).ToList();
-            list.Add(new SortStep(
-                list.Last().GetClonedSequence(),
-                Array.Empty<(int, Color4)>(),
-                list.Last().Comparison,
-                list.Last().Swap));
-            _steps = list.ToArray();
             _working = true;
             _startButton.Visibility = Visibility.Hidden;
             _pauseButton.Visibility = _stopButton.Visibility = Visibility.Visible;
+        }
+
+        private void InitializeRenderObjects(int length)
+        {
+            if (_renderObjects != null)
+            {
+                foreach (var ro in _renderObjects)
+                    ro.Dispose();
+            }
+            _renderObjects = new RenderObject[length];
+            for (int i = 0; i < length; ++i)
+            {
+                switch (_visualType)
+                {
+                    case VisualizationType.Bar:
+                        _renderObjects[i] = new RenderObject(ObjectFactory.Rectangle(1f, 1f), _program)
+                        {
+                            Position = new Vector3((i + 0.5f) / length, 0.5f, 0f)
+                        };
+                        break;
+                    case VisualizationType.Radial:
+                        _renderObjects[i] = new RenderObject(ObjectFactory.Arc(1f, MathHelper.TwoPi / length), _program)
+                        {
+                            Position = new Vector3(0.5f, 0.5f, 0f)
+                        };
+                        break;
+                    case VisualizationType.Dots:
+                        _renderObjects[i] = new RenderObject(ObjectFactory.Rectangle(1f, 1f), _program)
+                        {
+                            Scale = new Vector3((float)1 / length, (float)Math.Pow(length, 0.25) / length, 1f)
+                        };
+                        break;
+                }
+            }
         }
 
         private void Pause_Click(object sender, RoutedEventArgs e)
@@ -217,6 +280,7 @@ namespace SortVisualization
                 _currentStep = TotalComparison = TotalSwap = 0;
                 _steps = null;
             }
+            _startButton.IsEnabled = true;
         }
 
         private void SizeText_TextChanged(object sender, TextChangedEventArgs e)
@@ -276,6 +340,15 @@ namespace SortVisualization
                 GL.DeleteShader(shader);
             }
             return program;
+        }
+
+        private void _visualTypeCmb_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox combo)
+            {
+                _visualType = (VisualizationType)combo.SelectedIndex;
+                InitializeRenderObjects(Size);
+            }
         }
 
         private static int CompileShader(ShaderType type, string filepath)
