@@ -2,7 +2,7 @@
 
 This is a sort visualization project done as a part of assignments of data structure course of KSA.
 
-With this program, you can visualize 
+With this program, you can visualize sort algorithms in various ways.
 
 ## Supported Sort Algorithms
 - Bubble Sort
