@@ -120,6 +120,7 @@ namespace SortVisualization
 
         private SortStep[] _steps;
         private float _currentStep = 0f;
+        private int[] _currentArray;
 
         private bool _working = false;
 
@@ -132,29 +133,34 @@ namespace SortVisualization
             GL.ClearColor(Blend(Normal, Color4.Black, t));
 
             Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0f, 1f, 0f, 1f, -1f, 1f);
-            int stepInt = (int)_currentStep;
             if (_steps != null)
             {
-                SortStep current = _steps[stepInt];
-                UpdateRenderObjectsAndRender(stepInt, ref projection);
-                (TotalComparison, TotalSwap) = (current.Comparison, current.Swap);
-                if (_working && delta.TotalSeconds < 0.5)
-                {
-                    _currentStep += (float)(delta.TotalSeconds * Math.Pow(_speed, 1.1) * 14.03);
-                    _currentStep = Math.Min(_currentStep, _steps.Length - 1);
-                }
+                int lastStep = (int)_currentStep;
+                _currentStep += (float)(delta.TotalSeconds * Math.Pow(_speed, 1.1) * 14.03);
+                _currentStep = Math.Min(_currentStep, _steps.Length - 1);
+                int currentStep = (int)_currentStep;
+                if (_currentStep <= _steps.Length)
+                    for (int i = lastStep+1; i <= currentStep; ++i)
+                        foreach (var (idx, val) in _steps[i].Changes)
+                            _currentArray[idx] = val;
+                UpdateRenderObjectsAndRender(_currentArray, _steps[currentStep], ref projection);
+                (TotalComparison, TotalSwap) = (_steps[currentStep].Comparison, _steps[currentStep].Swap);
                 if (_currentStep >= _steps.Length - 1)
                 {
                     if (_working) _lastFinish = DateTime.Now;
                     Stop_Click(this, new RoutedEventArgs());
+                    _steps = null;
                 }
+            }
+            else if (_currentArray != null)
+            {
+                UpdateRenderObjectsAndRender(_currentArray, new SortStep(_currentArray, Enumerable.Empty<(int, Color4)>(), TotalComparison, TotalSwap), ref projection);
             }
         }
 
-        private void UpdateRenderObjectsAndRender(int stepInt, ref Matrix4 projection)
+        private void UpdateRenderObjectsAndRender(int[] array, SortStep step, ref Matrix4 projection)
         {
-            var step = _steps[stepInt];
-            for (int i = 0; i < step.Count; ++i)
+            for (int i = 0; i < array.Length; ++i)
             {
                 Color4 color = default;
                 switch (_colorType)
@@ -170,20 +176,20 @@ namespace SortVisualization
                         }
                         break;
                     case ColorType.Spectrum:
-                        color = HSVtoRGB((float)step[i] / step.Count * 360, 0.8f, 1f); break;
+                        color = HSVtoRGB((float)array[i] / array.Length * 360, 0.8f, 1f); break;
                 }
                 switch (_visualType)
                 {
                     case VisualizationType.Bar:
-                        _renderObjects[i].Scale = new Vector3(1f / step.Count, (float)step[i] / step.Count, 1f);
+                        _renderObjects[i].Scale = new Vector3(1f / array.Length, (float)array[i] / array.Length, 1f);
                         break;
                     case VisualizationType.Radial:
-                        float tworad = _colorType == ColorType.Solid ? (float)Math.Pow((float)step[i] / step.Count, 1.0 / 3.0) : 1f;
+                        float tworad = _colorType == ColorType.Solid ? (float)Math.Pow((float)array[i] / array.Length, 1.0 / 3.0) : 1f;
                         _renderObjects[i].Scale = 0.5f * new Vector3(tworad, tworad, 2f);
-                        _renderObjects[i].Rotation = new Vector3(0f, 0f, (float)i / step.Count * MathHelper.TwoPi);
+                        _renderObjects[i].Rotation = new Vector3(0f, 0f, (float)i / array.Length * MathHelper.TwoPi);
                         break;
                     case VisualizationType.Dots:
-                        _renderObjects[i].Position = new Vector3((i + 0.5f) / step.Count, (step[i] - 0.5f) / step.Count, 0f);
+                        _renderObjects[i].Position = new Vector3((i + 0.5f) / array.Length, (array[i] - 0.5f) / array.Length, 0f);
                         break;
                 }
                 GL.Uniform4(20, color);
@@ -223,7 +229,7 @@ namespace SortVisualization
                 {
                     var list = (sortmethod.Invoke(null, new object[] { array.Clone() }) as IEnumerable<SortStep>).ToList();
                     list.Add(new SortStep(
-                        list.Last().GetClonedSequence(),
+                        Enumerable.Range(1, Size).ToArray(),
                         Array.Empty<(int, Color4)>(),
                         list.Last().Comparison,
                         list.Last().Swap));
@@ -232,6 +238,7 @@ namespace SortVisualization
                 });
             }
             InitializeRenderObjects(array.Length);
+            _currentArray = Enumerable.Range(1, Size).ToArray();
             if (sortTask != null) await sortTask;
             var toToggle = new UIElement[] { _sizeText, _sizeSlider, _sortList, _initialTypeCmb };
             foreach (var element in toToggle)
@@ -302,6 +309,7 @@ namespace SortVisualization
             {
                 _currentStep = TotalComparison = TotalSwap = 0;
                 _steps = null;
+                _currentArray = null;
             }
             _startButton.IsEnabled = true;
         }
@@ -415,26 +423,27 @@ namespace SortVisualization
             switch (_initialType)
             {
                 case InitialType.Random:
-                    for (int i = 0; i < 2 * n; ++i)
-                    {
-                        int j = random.Next(array.Length);
-                        (array[i%n], array[j]) = (array[j], array[i%n]);
-                        steps.Add(new SortStep(array, new (int, Color4)[]
-                        {
-                            (i%n, Swap), (j, Swap)
-                        }));
-                    }
-                    break;
-                case InitialType.AlmostSorted:
-                    int logn = (int)Math.Log(n, 1.4);
                     for (int i = 0; i < n; ++i)
                     {
-                        int j = MathHelper.Clamp(i + random.Next(-logn, logn+1), 0, n-1);
+                        int j = random.Next(array.Length);
                         (array[i], array[j]) = (array[j], array[i]);
                         steps.Add(new SortStep(array, new (int, Color4)[]
                         {
                             (i, Swap), (j, Swap)
-                        }));
+                        }, 0, 0, i, j));
+                    }
+                    break;
+                case InitialType.AlmostSorted:
+                    int delta = (int)n / 10;
+                    for (int i = 0; i < 2*n; ++i)
+                    {
+                        int k = i % n;
+                        int j = MathHelper.Clamp(k + random.Next(-delta, delta+1), 0, n-1);
+                        (array[k], array[j]) = (array[j], array[k]);
+                        steps.Add(new SortStep(array, new (int, Color4)[]
+                        {
+                            (k, Swap), (j, Swap)
+                        }, 0, 0, k, j));
                     }
                     break;
                 case InitialType.Reverse:
@@ -445,7 +454,7 @@ namespace SortVisualization
                         steps.Add(new SortStep(array, new (int, Color4)[]
                         {
                             (i, Swap), (j, Swap)
-                        }));
+                        }, 0, 0, i, j));
                     }
                     break;
             }

@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:SortVisualization"
         mc:Ignorable="d"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        Title="Sort Visualization" Height="550" Width="889">
+        Title="Sort Visualization" Height="585" Width="889">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="307*"/>
@@ -63,7 +63,7 @@
                     <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
                              x:Name="_sizeText" Text="{Binding Path=Size, Mode=TwoWay}" TextChanged="SizeText_TextChanged" FontSize="15"/>
                 </DockPanel>
-                <Slider x:Name="_sizeSlider" Value="{Binding Path=Size, Mode=TwoWay}" SmallChange="1" Maximum="1000" Minimum="1"/>
+                <Slider x:Name="_sizeSlider" Value="{Binding Path=Size, Mode=TwoWay}" SmallChange="1" Maximum="2500" Minimum="1"/>
             </StackPanel>
 
             <!-- Speed Control -->
@@ -73,7 +73,7 @@
                     <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
                              x:Name="_speedText" Text="{Binding Path=Speed, Mode=TwoWay}" TextChanged="SpeedText_TextChanged" FontSize="15"/>
                 </DockPanel>
-                <Slider x:Name="_speedSlider" Value="{Binding Path=Speed, Mode=TwoWay}" SmallChange="1" Maximum="1000" Minimum="1"/>
+                <Slider x:Name="_speedSlider" Value="{Binding Path=Speed, Mode=TwoWay}" SmallChange="1" Maximum="10000" Minimum="1"/>
             </StackPanel>
 
             <Grid Grid.Row="6">

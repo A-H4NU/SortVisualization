@@ -9,24 +9,15 @@ namespace SortVisualization
 {
     public struct SortStep
     {
-        private readonly int[] Sequence;
+        public readonly IEnumerable<(int index, int value)> Changes;
 
         public readonly IEnumerable<(int, Color4)> Processing;
 
         public readonly int Comparison, Swap;
 
-        public int this[int index]
+        public SortStep(int[] sequence, IEnumerable<(int, Color4)> processing, int comparison, int swap, params int[] changedIndices)
         {
-            get => Sequence[index];
-        }
-
-        public int[] GetClonedSequence() => (int[])Sequence.Clone();
-
-        public int Count => Sequence.Length;
-
-        public SortStep(int[] sequence, IEnumerable<(int, Color4)> processing, int comparison = 0, int swap = 0)
-        {
-            Sequence = (int[])sequence.Clone();
+            Changes = (from i in changedIndices select (i, sequence[i])).ToArray();
             Processing = processing;
             Comparison = comparison;
             Swap = swap;

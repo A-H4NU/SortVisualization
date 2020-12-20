@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics;
+﻿using OpenTK;
+using OpenTK.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +36,7 @@ namespace SortVisualization
                         yield return new SortStep(array, new (int, Color4)[]
                         {
                             (i-1, MainWindow.Swap), (i, MainWindow.Swap)
-                        }, comparison, swap);
+                        }, comparison, swap, i-1, i);
                     }
                 }
                 ++k;
@@ -54,7 +55,7 @@ namespace SortVisualization
                     yield return new SortStep(array, new (int, Color4)[]
                     {
                         (k-j-1, MainWindow.Compare), (k-j, MainWindow.Compare)
-                    }, comparison, swap);
+                    }, comparison, swap, k-j-1, k-j);
                     if (array[k-j-1] > array[k-j])
                     {
                         (array[k-j-1], array[k-j]) = (array[k-j], array[k-j-1]);
@@ -62,7 +63,7 @@ namespace SortVisualization
                         yield return new SortStep(array, new (int, Color4)[]
                         {
                             (k-j-1, MainWindow.Swap), (k-j, MainWindow.Swap)
-                        }, comparison, swap);
+                        }, comparison, swap, k-j-1, k-j);
                     }
                     else break;
                     ++j;
@@ -96,7 +97,7 @@ namespace SortVisualization
                     yield return new SortStep(array, new (int, Color4)[]
                     {
                         (minIdx, MainWindow.Swap), (i, MainWindow.Swap)
-                    }, comparison, swap);
+                    }, comparison, swap, minIdx, i);
                 }
             }
         }
@@ -129,16 +130,16 @@ namespace SortVisualization
                     ++_comp;
                     yield return new SortStep(array, new (int, Color4)[]
                         {
-                        (i-k*(j+1), MainWindow.Compare), (i-k*j, MainWindow.Compare)
+                            (i-k*(j+1), MainWindow.Compare), (i-k*j, MainWindow.Compare)
                         }, _comp, _swap);
                     if (array[i-k*(j+1)] > array[i-k*j])
                     {
                         ++_swap;
+                        (array[i-k*(j+1)], array[i-k*j]) = (array[i-k*j], array[i-k*(j+1)]);
                         yield return new SortStep(array, new (int, Color4)[]
                         {
-                        (i-k*(j+1), MainWindow.Swap), (i-k*j, MainWindow.Swap)
-                        }, _comp, _swap);
-                        (array[i-k*(j+1)], array[i-k*j]) = (array[i-k*j], array[i-k*(j+1)]);
+                            (i-k*(j+1), MainWindow.Swap), (i-k*j, MainWindow.Swap)
+                        }, _comp, _swap, i-k*(j+1), i-k*j);
                     }
                     else break;
                     j++;
@@ -207,7 +208,7 @@ namespace SortVisualization
                     yield return new SortStep(array, new (int, Color4)[]
                     {
                         (k + start, MainWindow.Swap)
-                    }, comparison, swap);
+                    }, comparison, swap, k + start);
                 }
             }
         }
@@ -256,7 +257,7 @@ namespace SortVisualization
                     steps.Add(new SortStep(array, new (int, Color4)[]
                     {
                         (left, MainWindow.Swap), (right, MainWindow.Swap)
-                    }, _comp, _swap));
+                    }, _comp, _swap, left, right));
                 }
             }
             ++_swap;
@@ -264,7 +265,7 @@ namespace SortVisualization
             steps.Add(new SortStep(array, new (int, Color4)[]
                     {
                         (left, MainWindow.Swap), (pivot, MainWindow.Swap)
-                    }, _comp, _swap));
+                    }, _comp, _swap, left, pivot));
             var quick1 = Quick(array, offset, left - offset);
             var quick2 = Quick(array, left + 1, offset + size - left - 1);
             steps.AddRange(quick1); steps.AddRange(quick2);
@@ -297,7 +298,7 @@ namespace SortVisualization
                     yield return new SortStep(array, new (int, Color4)[]
                     {
                         (i, MainWindow.Swap)
-                    }, 0, swap);
+                    }, 0, swap, i);
                 }
             }
         }
@@ -317,7 +318,7 @@ namespace SortVisualization
                 result.Add(new SortStep(array, new (int, Color4)[]
                 {
                     (0, MainWindow.Swap), (i, MainWindow.Swap)
-                }, _comp, _swap));
+                }, _comp, _swap, 0, i));
                 result.AddRange(HeapifyStep(array, 0, i));
             }
             return result;
@@ -361,10 +362,107 @@ namespace SortVisualization
                 result.Add(new SortStep(array, new (int, Color4)[]
                 {
                     (idx, MainWindow.Swap), (largest, MainWindow.Swap)
-                }, _comp, _swap));
+                }, _comp, _swap, idx, largest));
                 result.AddRange(HeapifyStep(array, largest, size));
             }
 
+            return result;
+        }
+
+        public static IEnumerable<SortStep> Bogo(int[] array)
+        {
+            _comp = _swap = 0;
+            IEnumerable<SortStep> ShuffleSteps(int[] arr, int initComp, int initSwap, out int swap)
+            {
+                swap = 0;
+                Random r = new Random();
+                int n = arr.Length;
+                List<SortStep> step = new List<SortStep>(n);
+                for (int i = 0; i < n; ++i)
+                {
+                    int j = r.Next(n);
+                    ++initSwap; ++swap;
+                    (arr[i], arr[j]) = (arr[j], arr[i]);
+                    step.Add(new SortStep(array, new (int, Color4)[]
+                    {
+                        (i, MainWindow.Swap), (j, MainWindow.Swap)
+                    }, initComp, initSwap, i, j));
+                }
+                return step;
+            }
+            IEnumerable<SortStep> ScanSteps(int[] arr, int initComp, int initSwap, out bool success, out int comp)
+            {
+                comp = 0;
+                var step = new List<SortStep>();
+                int n = arr.Length;
+                for (int i = 0; i < n-1; ++i)
+                {
+                    ++initComp; ++comp;
+                    step.Add(new SortStep(arr, new (int, Color4)[]
+                    {
+                        (i, MainWindow.Compare), (i+1, MainWindow.Compare)
+                    }, initComp, initSwap));
+                    if (arr[i] > arr[i+1])
+                    {
+                        success = false;
+                        return step;
+                    }
+                }
+                success = true;
+                return step;
+            }
+            IEnumerable<SortStep> SortPretendsShuffle(int[] arr, int initComp, int initSwap, out int swap)
+            {
+                swap = 0;
+                List<SortStep> step = new List<SortStep>();
+                for (int i = 0; i < arr.Length; ++i)
+                {
+                    ++initSwap; swap = 0;
+                    int j = Array.IndexOf(arr, i+1);
+                    (arr[i], arr[j]) = (arr[j], arr[i]);
+                    step.Add(new SortStep(arr, new (int, Color4)[]
+                    {
+                        (i, MainWindow.Swap), (j, MainWindow.Swap)
+                    }, initComp, initSwap, i, j));
+                }
+                return step;
+            }
+            Random random = new Random();
+            double value = random.NextDouble();
+            double p = 1.0 / MathHelper.Factorial(array.Length);
+            long steps = (long)Math.Ceiling(Math.Log(1-value, 1-p));
+            if (steps > 1L << 20 || steps < 0)
+            {
+                string num;
+                if (steps < 0) num = "???";
+                else num = steps.ToString();
+                MessageBox.Show($"Failed to perform bogo sort : {num} steps were required", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                Array.Sort(array);
+                return new SortStep[]
+                {
+                    new SortStep(array, Enumerable.Empty<(int, Color4)>(), 0, 0, (Enumerable.Range(0, array.Length)).ToArray())
+                };
+            }
+            var result = new List<SortStep>((int)steps + (2*array.Length - 1) / 2);
+            for (int i = 1; i < steps; ++i)
+            {
+                bool success;
+                int swap, comp;
+                IEnumerable<SortStep> shuffle, scan;
+                do
+                {
+                    shuffle = ShuffleSteps(array, _comp, _swap, out swap);
+                    scan = ScanSteps(array, _comp, _swap + swap, out success, out comp);
+                } while (success);
+                result.AddRange(shuffle);
+                result.AddRange(scan);
+                _comp += comp;
+                _swap += swap;
+            }
+            result.AddRange(SortPretendsShuffle(array, _comp, _swap, out int lastSwap));
+            result.AddRange(ScanSteps(array, _comp, _swap, out _, out int lastComp));
+            _comp += lastComp;
+            _swap += lastSwap;
             return result;
         }
 

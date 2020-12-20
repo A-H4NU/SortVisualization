@@ -15,6 +15,7 @@ namespace SortVisualization
         Merge,
         Quick,
         Heap,
-        RadixLSD
+        RadixLSD,
+        Bogo
     }
 }
