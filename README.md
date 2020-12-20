@@ -5,15 +5,15 @@ This is a sort visualization project done as a part of assignments of data struc
 With this program, you can visualize 
 
 ## Supported Sort Algorithms
-- Bubble Sort       O(n^2)
-- Insertion Sort    O(n^2)
-- Selection Sort    O(n^2)
-- Shellsort         O(n^1.25)
-- Merge Sort        O(nlogn)
-- Quicksort         O(nlogn)
-- Heapsort          O(nlogn)
-- Radix Sort (LSD)  O(nw)
-- Bogosort          O(n!)
+- Bubble Sort
+- Insertion Sort
+- Selection Sort
+- Shellsort
+- Merge Sort
+- Quicksort
+- Heapsort
+- Radix Sort (LSD)
+- Bogosort
 
 ## How to run
 * Run SortVisualization.exe to execute this program.
