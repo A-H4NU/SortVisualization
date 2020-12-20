@@ -45,17 +45,19 @@ namespace SortVisualization
                 VisualizationTypes.Add(value);
             foreach (var value in Enum.GetNames(typeof(ColorType)))
                 ColorTypes.Add(value);
+            foreach (var value in Enum.GetNames(typeof(InitialType)))
+                InitialTypes.Add(value);
 
             var settings = new GLWpfControlSettings
             {
                 MajorVersion = 3,
-                MinorVersion = 6
+                MinorVersion = 6,
             };
             OpenTkControl.Start(settings);
-            GL.ClearColor(Color4.White);
+            GL.ClearColor(Color4.Black);
 
             _program = CreateProgram(ColorVertexPath, ColorFragmentPath);
-            _colorTypeCmb.SelectedIndex = _visualTypeCmb.SelectedIndex = 0;
+            _initialTypeCmb.SelectedIndex = _colorTypeCmb.SelectedIndex = _visualTypeCmb.SelectedIndex = 0;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -107,10 +109,14 @@ namespace SortVisualization
         private SortType? _sortType = null;
         private VisualizationType _visualType = VisualizationType.Bar;
         private ColorType _colorType = ColorType.Solid;
+        private InitialType _initialType = InitialType.Random;
+
+        private DateTime _lastFinish = new DateTime();
 
         public ObservableCollection<string> SortTypes { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> VisualizationTypes { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> ColorTypes { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> InitialTypes { get; } = new ObservableCollection<string>();
 
         private SortStep[] _steps;
         private float _currentStep = 0f;
@@ -122,6 +128,8 @@ namespace SortVisualization
         private void OpenTkControl_OnRender(TimeSpan delta)
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            float t = (float)MathHelper.Clamp((DateTime.Now - _lastFinish).TotalSeconds, 0, 0.5) + 0.5f;
+            GL.ClearColor(Blend(Normal, Color4.Black, t));
 
             Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0f, 1f, 0f, 1f, -1f, 1f);
             int stepInt = (int)_currentStep;
@@ -137,6 +145,7 @@ namespace SortVisualization
                 }
                 if (_currentStep >= _steps.Length - 1)
                 {
+                    if (_working) _lastFinish = DateTime.Now;
                     Stop_Click(this, new RoutedEventArgs());
                 }
             }
@@ -169,7 +178,7 @@ namespace SortVisualization
                         _renderObjects[i].Scale = new Vector3(1f / step.Count, (float)step[i] / step.Count, 1f);
                         break;
                     case VisualizationType.Radial:
-                        float tworad = (float)Math.Sqrt((float)step[i] / step.Count);
+                        float tworad = _colorType == ColorType.Solid ? (float)Math.Pow((float)step[i] / step.Count, 1.0 / 3.0) : 1f;
                         _renderObjects[i].Scale = 0.5f * new Vector3(tworad, tworad, 2f);
                         _renderObjects[i].Rotation = new Vector3(0f, 0f, (float)i / step.Count * MathHelper.TwoPi);
                         break;
@@ -200,26 +209,31 @@ namespace SortVisualization
             _currentStep = 0;
             _startButton.IsEnabled = false;
             int[] array = Enumerable.Range(1, Size).ToArray();
-            Shuffle(array);
+            var shuffle = Shuffle(array);
             var sortmethod = typeof(Sort).GetMethod(Enum.GetName(typeof(SortType), _sortType.Value));
-            var sortTask = Task.Run(() =>
-            {
-                var list = (sortmethod.Invoke(null, new object[] { array.Clone() }) as IEnumerable<SortStep>).ToList();
-                list.Add(new SortStep(
-                    list.Last().GetClonedSequence(),
-                    Array.Empty<(int, Color4)>(),
-                    list.Last().Comparison,
-                    list.Last().Swap));
-                _steps = list.ToArray();
-            });
+            Task sortTask = null;
             if (_size == 1)
             {
                 _steps = new SortStep[] { new SortStep(new int[] { 1 }, Array.Empty<(int, Color4)>(), 0, 0) };
                 return;
             }
+            else
+            {
+                sortTask = Task.Run(() =>
+                {
+                    var list = (sortmethod.Invoke(null, new object[] { array.Clone() }) as IEnumerable<SortStep>).ToList();
+                    list.Add(new SortStep(
+                        list.Last().GetClonedSequence(),
+                        Array.Empty<(int, Color4)>(),
+                        list.Last().Comparison,
+                        list.Last().Swap));
+                    list.InsertRange(0, shuffle);
+                    _steps = list.ToArray();
+                });
+            }
             InitializeRenderObjects(array.Length);
-            await sortTask;
-            var toToggle = new UIElement[] { _sizeText, _sizeSlider, _sortList };
+            if (sortTask != null) await sortTask;
+            var toToggle = new UIElement[] { _sizeText, _sizeSlider, _sortList, _initialTypeCmb };
             foreach (var element in toToggle)
                 element.IsEnabled = false;
             _working = true;
@@ -281,7 +295,7 @@ namespace SortVisualization
             _startButton.Visibility = Visibility.Visible;
             _pauseButton.Visibility = _stopButton.Visibility = Visibility.Hidden;
             _pauseButton.Content = "Pause";
-            var toToggle = new UIElement[] { _sizeText, _sizeSlider, _sortList };
+            var toToggle = new UIElement[] { _sizeText, _sizeSlider, _sortList, _initialTypeCmb };
             foreach (var element in toToggle)
                 element.IsEnabled = true;
             if (sender is Button)
@@ -358,7 +372,7 @@ namespace SortVisualization
             return program;
         }
 
-        private void _visualTypeCmb_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void VisualTypeCmb_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (sender is ComboBox combo)
             {
@@ -367,12 +381,16 @@ namespace SortVisualization
             }
         }
 
-        private void _colorTypeCmb_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ColorTypeCmb_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (sender is ComboBox combo)
-            {
                 _colorType = (ColorType)combo.SelectedIndex;
-            }
+        }
+
+        private void InitialTypeCmb_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox combo)
+                _initialType = (InitialType)combo.SelectedIndex;
         }
 
         private static int CompileShader(ShaderType type, string filepath)
@@ -389,14 +407,49 @@ namespace SortVisualization
             return shader;
         }
 
-        private static void Shuffle(int[] array)
+        private IEnumerable<SortStep> Shuffle(int[] array)
         {
+            List<SortStep> steps = new List<SortStep>(array.Length);
             Random random = new Random();
-            for (int i = 0; i < array.Length; ++i)
+            int n = array.Length;
+            switch (_initialType)
             {
-                int j = random.Next(array.Length);
-                (array[i], array[j]) = (array[j], array[i]);
+                case InitialType.Random:
+                    for (int i = 0; i < 2 * n; ++i)
+                    {
+                        int j = random.Next(array.Length);
+                        (array[i%n], array[j]) = (array[j], array[i%n]);
+                        steps.Add(new SortStep(array, new (int, Color4)[]
+                        {
+                            (i%n, Swap), (j, Swap)
+                        }));
+                    }
+                    break;
+                case InitialType.AlmostSorted:
+                    int logn = (int)Math.Log(n, 1.4);
+                    for (int i = 0; i < n; ++i)
+                    {
+                        int j = MathHelper.Clamp(i + random.Next(-logn, logn+1), 0, n-1);
+                        (array[i], array[j]) = (array[j], array[i]);
+                        steps.Add(new SortStep(array, new (int, Color4)[]
+                        {
+                            (i, Swap), (j, Swap)
+                        }));
+                    }
+                    break;
+                case InitialType.Reverse:
+                    for (int i = 0; i < n/2; ++i)
+                    {
+                        int j = n-i-1;
+                        (array[i], array[j]) = (array[j], array[i]);
+                        steps.Add(new SortStep(array, new (int, Color4)[]
+                        {
+                            (i, Swap), (j, Swap)
+                        }));
+                    }
+                    break;
             }
+            return steps;
         }
 
         /// <param name="H">in degree</param>
@@ -414,6 +467,16 @@ namespace SortVisualization
             else if (H < 300) (r, g, b) = (X, 0, C);
             else (r, g, b) = (C, 0, X);
             return new Color4(r+m, g+m, b+m, 1f);
+        }
+
+        private static Color4 Blend(Color4 clr1, Color4 clr2, float t)
+        {
+            float Div(float n1, float n2, float f) => n1*(1-f) + n2*f;
+            return new Color4(
+                Div(clr1.R, clr2.R, t),
+                Div(clr1.G, clr2.G, t),
+                Div(clr1.B, clr2.B, t),
+                Div(clr1.A, clr2.A, t));
         }
     }
 }

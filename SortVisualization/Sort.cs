@@ -107,7 +107,7 @@ namespace SortVisualization
                 return Insertion(array);
             var steps = new List<SortStep>();
             _comp = _swap = 0;
-            int logn = (int)Math.Floor(Math.Log(array.Length)) + 1;
+            int logn = (int)Math.Floor(Math.Log(array.Length, 2)) + 1;
             logn = logn / 2 * 2 + 1;
             for (int k = logn; k >= 1; k -= 2)
             {

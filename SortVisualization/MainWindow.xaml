@@ -7,23 +7,28 @@
         xmlns:local="clr-namespace:SortVisualization"
         mc:Ignorable="d"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        Title="Sort Visualization" Height="500" Width="889">
+        Title="Sort Visualization" Height="550" Width="889">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="307*"/>
             <ColumnDefinition Width="89*"/>
-            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="175"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <glWpfControl:GLWpfControl x:Name="OpenTkControl" Render="OpenTkControl_OnRender" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"/>
+        <glWpfControl:GLWpfControl x:Name="OpenTkControl" Render="OpenTkControl_OnRender" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2">
+            <glWpfControl:GLWpfControl.Effect>
+                <BlurEffect Radius="1.5"/>
+            </glWpfControl:GLWpfControl.Effect>
+        </glWpfControl:GLWpfControl>
         <Grid x:Name="grid" Grid.Column="2" Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="50"/>
-                <RowDefinition Height="50"/>
+                <RowDefinition Height="45"/>
+                <RowDefinition Height="45"/>
+                <RowDefinition Height="45"/>
                 <RowDefinition Height="50"/>
                 <RowDefinition Height="50"/>
                 <RowDefinition Height="50"/>
@@ -37,17 +42,22 @@
             </ListBox>
 
             <DockPanel Grid.Row="1" Margin="10,0,10,0">
+                <Label FontSize="15" DockPanel.Dock="Left" VerticalAlignment="Center">Initial:</Label>
+                <ComboBox x:Name="_initialTypeCmb" ItemsSource="{Binding Path=InitialTypes}" VerticalAlignment="Center" SelectionChanged="InitialTypeCmb_SelectionChanged" FontSize="15"/>
+            </DockPanel>
+
+            <DockPanel Grid.Row="2" Margin="10,0,10,0">
                 <Label FontSize="15" DockPanel.Dock="Left" VerticalAlignment="Center">Color:</Label>
-                <ComboBox x:Name="_colorTypeCmb" ItemsSource="{Binding Path=ColorTypes}" VerticalAlignment="Center" SelectionChanged="_colorTypeCmb_SelectionChanged" FontSize="15"/>
+                <ComboBox x:Name="_colorTypeCmb" ItemsSource="{Binding Path=ColorTypes}" VerticalAlignment="Center" SelectionChanged="ColorTypeCmb_SelectionChanged" FontSize="15"/>
             </DockPanel>
             
-            <DockPanel Grid.Row="2" Margin="10,0,10,0">
+            <DockPanel Grid.Row="3" Margin="10,0,10,0">
                 <Label FontSize="15" DockPanel.Dock="Left" VerticalAlignment="Center">Visual:</Label>
-                <ComboBox x:Name="_visualTypeCmb" ItemsSource="{Binding Path=VisualizationTypes}" VerticalAlignment="Center" SelectionChanged="_visualTypeCmb_SelectionChanged" FontSize="15"/>
+                <ComboBox x:Name="_visualTypeCmb" ItemsSource="{Binding Path=VisualizationTypes}" VerticalAlignment="Center" SelectionChanged="VisualTypeCmb_SelectionChanged" FontSize="15"/>
             </DockPanel>
 
             <!-- Size Control -->
-            <StackPanel Grid.Row="3" Margin="10,0,10,0">
+            <StackPanel Grid.Row="4" Margin="10,0,10,0">
                 <DockPanel Margin="0">
                     <Label FontSize="15" DockPanel.Dock="Left">Size:</Label>
                     <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
@@ -57,7 +67,7 @@
             </StackPanel>
 
             <!-- Speed Control -->
-            <StackPanel Grid.Row="4" Margin="10,0,10,0">
+            <StackPanel Grid.Row="5" Margin="10,0,10,0">
                 <DockPanel Margin="0">
                     <Label FontSize="15" DockPanel.Dock="Left">Speed:</Label>
                     <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch"
@@ -66,7 +76,7 @@
                 <Slider x:Name="_speedSlider" Value="{Binding Path=Speed, Mode=TwoWay}" SmallChange="1" Maximum="1000" Minimum="1"/>
             </StackPanel>
 
-            <Grid Grid.Row="5">
+            <Grid Grid.Row="6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
