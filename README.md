@@ -6,6 +6,7 @@ This is a sort visualization project done as a part of assignments of data struc
 * Please do not isolate the execution file from other files in the zip file.
 
 # How to use
+![alt text](https://github.com/A-H4NU/SortVisualization/blob/master/SortVisualization/Sort%20Visualization%20Tutorial.png?raw=true)
 1. Select a sort algorithm
 2. Select a initial sequence type (defualt is random)
 3. Select a color type (default is solid)
