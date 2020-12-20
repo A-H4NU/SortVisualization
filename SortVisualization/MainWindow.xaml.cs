@@ -136,8 +136,11 @@ namespace SortVisualization
             if (_steps != null)
             {
                 int lastStep = (int)_currentStep;
-                _currentStep += (float)(delta.TotalSeconds * Math.Pow(_speed, 1.1) * 14.03);
-                _currentStep = Math.Min(_currentStep, _steps.Length - 1);
+                if (_working)
+                {
+                    _currentStep += (float)(delta.TotalSeconds * Math.Pow(_speed, 1.1) * 14.03);
+                    _currentStep = Math.Min(_currentStep, _steps.Length - 1);
+                }
                 int currentStep = (int)_currentStep;
                 if (_currentStep <= _steps.Length)
                     for (int i = lastStep+1; i <= currentStep; ++i)
