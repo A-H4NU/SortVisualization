@@ -3,6 +3,7 @@
 This is a sort visualization project done as a part of assignments of data structure course of KSA.
 
 * Run SortVisualization.exe to execute this program.
+* Please do not isolate the execution file from other files in the zip file.
 
 # How to use
 1. Select a sort algorithm
