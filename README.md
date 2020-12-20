@@ -11,7 +11,8 @@ This is a sort visualization project done as a part of assignments of data struc
 4. Select a visual type (default is bar)
 
 # Required Speculations
-1. At least Windows 10 v1803-v1809
-2. At least .NET Framework 4.7.2 installed
+1. x64 operating system
+2. At least Windows 10 v1803-v1809
+3. At least .NET Framework 4.7.2 installed
 
 - program made by Seungwoo Han (20-120)
