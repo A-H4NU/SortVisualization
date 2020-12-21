@@ -423,6 +423,7 @@ namespace SortVisualization
             List<SortStep> steps = new List<SortStep>(array.Length);
             Random random = new Random();
             int n = array.Length;
+            steps.Add(new SortStep(array, Enumerable.Empty<(int, Color4)>(), 0, 0));
             switch (_initialType)
             {
                 case InitialType.Random:

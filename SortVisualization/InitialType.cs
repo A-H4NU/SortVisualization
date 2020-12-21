@@ -10,6 +10,7 @@ namespace SortVisualization
     {
         Random,
         AlmostSorted,
-        Reverse
+        Reverse,
+        Sorted
     }
 }
