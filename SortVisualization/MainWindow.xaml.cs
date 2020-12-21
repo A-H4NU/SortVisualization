@@ -28,8 +28,8 @@ namespace SortVisualization
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public const string ColorVertexPath = @"color_vertex.vert";
-        public const string ColorFragmentPath = @"color_fragment.frag";
+        public const string ColorVertexPath = @"Shaders\color_vertex.vert";
+        public const string ColorFragmentPath = @"Shaders\color_fragment.frag";
 
         private readonly int _program;
 
