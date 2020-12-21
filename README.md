@@ -44,6 +44,6 @@ With this program, you can visualize sort algorithms in various ways.
 ### v1.0
 * First release
 
+----
 
-
-- program made by Seungwoo Han (20-120)
+*program made by Seungwoo Han (20-120)*
