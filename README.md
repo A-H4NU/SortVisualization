@@ -31,4 +31,19 @@ With this program, you can visualize sort algorithms in various ways.
 2. At least Windows 10 v1803-v1809
 3. At least .NET Framework 4.7.2 installed
 
+## Changelog
+
+### v1.1.1
+* Fixed a bug ("reverse" initial state)
+* Added "sorted" initial state
+
+### v1.1
+* Significant optimizations for running time and memory
+* Fixed some bugs
+
+### v1.0
+* First release
+
+
+
 - program made by Seungwoo Han (20-120)
