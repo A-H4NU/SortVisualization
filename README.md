@@ -21,6 +21,7 @@ With this program, you can visualize sort algorithms in various ways.
 
 ## How to use
 ![alt text](https://github.com/A-H4NU/SortVisualization/blob/master/SortVisualization/Sort%20Visualization%20Tutorial.png?raw=true)
+![alt text](https://github.com/A-H4NU/SortVisualization/blob/master/SortVisualization/Sort%20Visualization%20Tutorial%202.png?raw=true)
 1. Select a sort algorithm
 2. Select a initial sequence type (defualt is random)
 3. Select a color type (default is solid)
